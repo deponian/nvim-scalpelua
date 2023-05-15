@@ -52,6 +52,18 @@ vmap <Leader>r <Plug>(Scalpel)
 vmap <Leader>R <Plug>(ScalpelMultiline)
 ```
 
+Map `require('scalpelua').clear_highlight()` to clear highlighting after you're done with the replacement.
+
+```lua
+vim.keymap.set('n', "<leader>n", "<cmd>lua require('scalpelua').clear_highlight()<CR>")
+```
+
+or
+
+```vim
+nmap <Leader>n <cmd>lua require('scalpelua').clear_highlight()<CR>
+```
+
 ### Configuration
 
 These are default options. You can run empty `require('scalpelua').setup()` if these options suit you.
@@ -75,7 +87,7 @@ require("scalpelua").setup({
 
 You can enable integration with [mini.map plugin](https://github.com/echasnovski/mini.map) by setting `minimap_enabled = true` in your configuration. This way you will see all found instances of the pattern in your mini.map window and it will be updated every time you replace new pattern pressing `y` key.
 
-**Notice**: original mini.map plugin doesn't expose some internal functions that necessary during the replacement process, so I've created highly complicated [fork](https://github.com/deponian/mini.map) with three (!) new lines of code. Use it if you want to enable mini.map integration with Scalpelua plugin.
+**Notice**: original mini.map plugin doesn't expose some internal functions that are necessary during the replacement process, so I've created highly complicated [fork](https://github.com/deponian/mini.map) with three (!) new lines of code. Use it if you want to enable mini.map integration with Scalpelua plugin.
 
 ### Acknowledgements
 
