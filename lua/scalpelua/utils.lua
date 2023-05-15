@@ -61,10 +61,6 @@ function M.replace_all(pattern, replacement, firstline, lastline, startline, sta
   local start = startcolumn
   local finish = 0
   repeat
-    if M.minimap_enabled then
-      MiniMap.update_map_lines()
-      MiniMap.update_map_integrations()
-    end
     repeat
       local line = vim.api.nvim_buf_get_lines(0, lineno - 1, lineno, false)[1]
       start, finish = string.find(line, pattern, start, true)
@@ -73,7 +69,9 @@ function M.replace_all(pattern, replacement, firstline, lastline, startline, sta
 
         vim.api.nvim_win_set_cursor(0, {lineno, start})
         if M.minimap_enabled then
+          MiniMap.update_map_lines()
           MiniMap.update_map_scrollbar()
+          MiniMap.update_map_integrations()
         end
         vim.api.nvim_buf_add_highlight(0, M.namespace, M.current_pattern_hl, lineno - 1, start - 1, finish)
         vim.cmd('redraw')
@@ -89,6 +87,9 @@ function M.replace_all(pattern, replacement, firstline, lastline, startline, sta
           replace_in_line(pattern, replacement, lineno, start)
           highlight_in_line(pattern, lineno)
           replaced = replaced + 1
+          if M.minimap_enabled then
+            MiniMap.update_map_integrations()
+          end
         elseif input == 'n' then
           vim.api.nvim_buf_clear_namespace(0, M.namespace, lineno - 1, lineno)
           highlight_in_line(pattern, lineno)
@@ -107,12 +108,6 @@ function M.replace_all(pattern, replacement, firstline, lastline, startline, sta
         start = start + 1
       end
     until start == nil or match == matches
-
-    if M.minimap_enabled then
-      MiniMap.update_map_lines()
-      MiniMap.update_map_integrations()
-    end
-
     -- wrap around the end of file
     if lineno ~= lastline then
       lineno = lineno + 1

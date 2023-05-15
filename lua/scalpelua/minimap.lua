@@ -1,16 +1,15 @@
 local M = {}
 
-local function minimap_integration()
-  local pattern = vim.fn.getreg("p")
-  local firstline = vim.fn.getreg("f")
-  local lastline = vim.fn.getreg("l")
+function M.minimap_integration()
+  local cursorline = vim.api.nvim_win_get_cursor(0)[1]
+  local line = vim.api.nvim_buf_get_lines(0, cursorline - 1, cursorline, false)[1]
+  local position = string.find(line, M.pattern, 1, true)
+  if position == nil then
+    M.matches[cursorline] = nil
+  end
   local matches = {}
-  for lineno = firstline, lastline do
-    local line = vim.api.nvim_buf_get_lines(0, lineno - 1, lineno, false)[1]
-    local position = string.find(line, pattern, 1, true)
-    if position ~= nil then
-      table.insert(matches, { line = lineno, hl_group = M.minimap_highlighting })
-    end
+  for _, tbl in pairs(M.matches) do
+    table.insert(matches, tbl)
   end
   return matches
 end
@@ -22,33 +21,40 @@ local function minimap_is_closed()
 end
 
 function M.before_replacement(pattern, firstline, lastline)
-  -- save registers
-  M.reg_p = vim.fn.getreg("p")
-  M.reg_f = vim.fn.getreg("f")
-  M.reg_l = vim.fn.getreg("l")
+  M.pattern = pattern
+  M.firstline = firstline
+  M.lastline = lastline
 
-  -- make pattern, firstline and lastline accessable from minimap_integration()
-  vim.fn.setreg("p", pattern)
-  vim.fn.setreg("f", firstline)
-  vim.fn.setreg("l", lastline)
+  M.matches = {}
+  for lineno = M.firstline, M.lastline do
+    local line = vim.api.nvim_buf_get_lines(0, lineno - 1, lineno, false)[1]
+    local position = string.find(line, M.pattern, 1, true)
+    if position ~= nil then
+      M.matches[lineno] = { line = lineno, hl_group = M.minimap_highlighting }
+    end
+  end
 
   -- add scalpelua integration to minimap and save previous integrations
   M.minimap_integrations = vim.deepcopy(MiniMap.config.integrations)
-  table.insert(MiniMap.config.integrations, 1, minimap_integration)
+  table.insert(MiniMap.config.integrations, 1, M.minimap_integration)
 
   -- open if it wasn't opened already
   M.minimap_was_closed = minimap_is_closed()
   if M.minimap_was_closed then
     MiniMap.open()
   end
+
+  M.matches = {}
+  for lineno = firstline, lastline do
+    local line = vim.api.nvim_buf_get_lines(0, lineno - 1, lineno, false)[1]
+    local position = string.find(line, pattern, 1, true)
+    if position ~= nil then
+      M.matches[lineno] = { line = lineno, hl_group = M.minimap_highlighting }
+    end
+  end
 end
 
 function M.after_replacement()
-  -- restore registers
-  vim.fn.setreg("p", M.reg_p)
-  vim.fn.setreg("f", M.reg_f)
-  vim.fn.setreg("l", M.reg_l)
-
   -- restore previous state of MiniMap integrations list
   MiniMap.config.integrations = M.minimap_integrations
 
