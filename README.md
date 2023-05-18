@@ -38,11 +38,11 @@ return {
 
 ### Usage
 
-Map `<Plug>(Scalpel)` to replace selected sequence or `<Plug>(ScalpelVisual)` to replace something inside selected sequence.
+Map `<Plug>(Scalpelua)` to replace selected sequence or `<Plug>(ScalpeluaMultiline)` to replace something inside selected sequence.
 
 ```lua
-vim.keymap.set('v', "<leader>r", "<Plug>(Scalpel)")
-vim.keymap.set('v', "<leader>R", "<Plug>(ScalpelMultiline)")
+vim.keymap.set('v', "<leader>r", "<Plug>(Scalpelua)")
+vim.keymap.set('v', "<leader>R", "<Plug>(ScalpeluaMultiline)")
 ```
 
 or

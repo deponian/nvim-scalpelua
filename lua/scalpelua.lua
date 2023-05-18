@@ -24,18 +24,18 @@ function M.setup(config)
   end
 
   vim.api.nvim_create_user_command(
-    'Scalpel',
-    M.scalpel,
+    'Scalpelua',
+    M.scalpelua,
     {
       range = true,
       nargs = 1,
     }
   )
-  vim.keymap.set('v', '<Plug>(Scalpel)', [[:Scalpel "<C-R>=luaeval('require("scalpelua").get_oneline_selection()')<CR>" » ""<Left>]])
-  vim.keymap.set('v', '<Plug>(ScalpelMultiline)', [[:Scalpel "" » ""<Left><Left><Left><Left><Left><Left>]])
+  vim.keymap.set('v', '<Plug>(Scalpelua)', [[:Scalpelua "<C-R>=luaeval('require("scalpelua").get_oneline_selection()')<CR>" » ""<Left>]])
+  vim.keymap.set('v', '<Plug>(ScalpeluaMultiline)', [[:Scalpelua "" » ""<Left><Left><Left><Left><Left><Left>]])
 end
 
-function M.scalpel(parameters)
+function M.scalpelua(parameters)
   -- what to replace and what to replace with
   local pattern, replacement
   -- start and end of range where replacement will be performed
