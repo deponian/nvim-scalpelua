@@ -87,12 +87,14 @@ function M.replace_all(pattern, replacement, firstline, lastline, startline, sta
           replace_in_line(pattern, replacement, lineno, start)
           highlight_in_line(pattern, lineno)
           replaced = replaced + 1
+          start = start + #replacement
           if M.minimap_enabled then
             MiniMap.update_map_integrations()
           end
         elseif input == 'n' then
           vim.api.nvim_buf_clear_namespace(0, M.namespace, lineno - 1, lineno)
           highlight_in_line(pattern, lineno)
+          start = start + #pattern
         elseif input == 'a' then
           replace_in_range(pattern, replacement, firstline, lastline)
           vim.api.nvim_win_set_cursor(0, {startline, startcolumn})
@@ -105,7 +107,6 @@ function M.replace_all(pattern, replacement, firstline, lastline, startline, sta
         elseif input == 'q' or input == string.char(27) then
           return replaced
         end
-        start = start + 1
       end
     until start == nil or match == matches
     -- wrap around the end of file
