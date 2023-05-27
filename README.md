@@ -52,18 +52,6 @@ vmap <Leader>r <Plug>(Scalpel)
 vmap <Leader>R <Plug>(ScalpelMultiline)
 ```
 
-Map `require('scalpelua').clear_highlight()` to clear highlighting after you're done with the replacement.
-
-```lua
-vim.keymap.set('n', "<leader>n", "<cmd>lua require('scalpelua').clear_highlight()<CR>")
-```
-
-or
-
-```vim
-nmap <Leader>n <cmd>lua require('scalpelua').clear_highlight()<CR>
-```
-
 ### Configuration
 
 These are default options. You can run empty `require('scalpelua').setup()` if these options suit you.

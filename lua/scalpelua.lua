@@ -49,13 +49,13 @@ function M.scalpelua(parameters)
     firstline = 1
     lastline = vim.api.nvim_buf_line_count(0)
     startline = vim.api.nvim_win_get_cursor(0)[1]
-    startcolumn = vim.api.nvim_win_get_cursor(0)[2]
+    startcolumn = vim.api.nvim_win_get_cursor(0)[2] + 1
   else
     -- operate on the range
-    firstline = math.min(parameters.line1, parameters.line2) - 1
+    firstline = math.min(parameters.line1, parameters.line2)
     lastline = math.max(parameters.line1, parameters.line2)
     startline = firstline
-    startcolumn = 0
+    startcolumn = 1
   end
 
   pattern, replacement = string.match(parameters.args, '^"(.+)" ' .. M.config.separator .. ' "(.*)"$')
@@ -74,6 +74,10 @@ function M.scalpelua(parameters)
   -- report
   print(string.format("%s substitution%s out of %s matches", replaced, (replaced == 1) and '' or 's', matches))
 
+  -- replace our highlighting with the one from neovim's builtin search
+  vim.api.nvim_buf_clear_namespace(0, M.namespace, 0, -1)
+  vim.fn.setreg('/', [[\V\C]] .. vim.fn.escape(pattern, [[\]]))
+
   if M.config.minimap_enabled then
     minimap.after_replacement()
   end
@@ -90,10 +94,6 @@ function M.get_oneline_selection()
   else
     return 'multiline is not supported'
   end
-end
-
-function M.clear_highlight()
-  vim.api.nvim_buf_clear_namespace(0, M.namespace, 0, -1)
 end
 
 return M
