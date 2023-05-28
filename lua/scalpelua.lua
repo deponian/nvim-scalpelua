@@ -17,7 +17,8 @@ local DEFAULT_OPTS = {
     enabled = false,
     group = "LineNr",
     range = 3
-  }
+  },
+  save_search_pattern = true
 }
 
 function M.setup(config)
@@ -85,7 +86,9 @@ function M.scalpelua(parameters)
   vim.api.nvim_buf_clear_namespace(0, M.dehighlighting_ns, 0, -1)
 
   -- save pattern in the search register
-  vim.fn.setreg('/', [[\V\C]] .. vim.fn.escape(pattern, [[\]]))
+  if M.config.save_search_pattern then
+    vim.fn.setreg('/', [[\V\C]] .. vim.fn.escape(pattern, [[\]]))
+  end
 
   if M.config.minimap_enabled then
     minimap.after_replacement()

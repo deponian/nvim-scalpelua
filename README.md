@@ -77,7 +77,11 @@ require("scalpelua").setup({
     enabled = false,
     group = "LineNr",
     range = 3
-  }
+  },
+  -- save pattern to "/" register (see :h quote/)
+  -- it's useful if you want to run n, N, * and
+  -- other search related commands after replacement
+  save_search_pattern = true
 })
 ```
 
