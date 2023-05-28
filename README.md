@@ -10,7 +10,7 @@ Install via your preferred package manager:
 - `deponian/nvim-scalpelua`
 - `deponian/mini.map` for integration with mini.map (optional) (see below)
 
-You can check current version in [changelog](./CHANGELOG.md).
+You can check current version in [changelog](./CHANGELOG.md) or on [releases page](https://github.com/deponian/nvim-scalpelua/releases).
 
 Examples for some package managers:
 
