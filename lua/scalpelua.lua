@@ -2,7 +2,8 @@ local M = {}
 
 local utils = require("scalpelua.utils")
 local minimap = require("scalpelua.minimap")
-M.namespace = utils.namespace
+M.highlighting_ns = utils.highlighting_ns
+M.dehighlighting_ns = utils.dehighlighting_ns
 
 local DEFAULT_OPTS = {
   minimap_enabled = false,
@@ -11,6 +12,11 @@ local DEFAULT_OPTS = {
     regular_search_pattern = "Search",
     current_search_pattern = "WildMenu",
     minimap_integration = "Constant",
+  },
+  dehighlighting = {
+    enabled = false,
+    group = "LineNr",
+    range = 3
   }
 }
 
@@ -74,8 +80,11 @@ function M.scalpelua(parameters)
   -- report
   print(string.format("%s substitution%s out of %s matches", replaced, (replaced == 1) and '' or 's', matches))
 
-  -- replace our highlighting with the one from neovim's builtin search
-  vim.api.nvim_buf_clear_namespace(0, M.namespace, 0, -1)
+  -- clear our highlighting
+  vim.api.nvim_buf_clear_namespace(0, M.highlighting_ns, 0, -1)
+  vim.api.nvim_buf_clear_namespace(0, M.dehighlighting_ns, 0, -1)
+
+  -- save pattern in the search register
   vim.fn.setreg('/', [[\V\C]] .. vim.fn.escape(pattern, [[\]]))
 
   if M.config.minimap_enabled then

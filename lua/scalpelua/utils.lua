@@ -1,9 +1,37 @@
 local M = {}
 
-M.namespace = vim.api.nvim_create_namespace("scalpelua")
+M.highlighting_ns = vim.api.nvim_create_namespace("scalpelua_hl")
+M.dehighlighting_ns = vim.api.nvim_create_namespace("scalpelua_dehl")
+
+-- dehighlight lines before and after number lineno line
+-- lineno is one-based
+local function dehighlight(lineno)
+  local clear = vim.api.nvim_buf_clear_namespace
+  local add = vim.api.nvim_buf_add_highlight
+
+  local ns = M.dehighlighting_ns
+  local range = M.dehighlighting_range
+  local group = M.dehighlighting_group
+  local lastline = vim.api.nvim_buf_line_count(0)
+
+  -- convert lineno to zero-based
+  local lineno_zero = lineno - 1
+  local upper_boundary = lineno_zero - range >= 0 and lineno_zero - range or 0
+  local lower_boundary = lineno_zero + range <= lastline and lineno_zero + range or lastline
+
+  clear(0, ns, upper_boundary, lower_boundary)
+  for i = upper_boundary, lower_boundary do
+    -- don't dehighlight current line
+    if i ~= lineno_zero then
+      add(0, ns, group, i, 0, -1)
+    end
+  end
+end
 
 -- replace first occurence of pattern after #position column to
 -- replacement on number lineno line
+-- lineno is one-based
+-- position is one-based
 local function replace_in_line(pattern, replacement, lineno, position)
   local line = vim.api.nvim_buf_get_lines(0, lineno - 1, lineno, false)[1]
   local prefix = string.sub(line, 1, position - 1)
@@ -17,6 +45,7 @@ end
 -- range is list {firstline, lastline}
 -- start is list {line, column}
 -- finish is list {line, column}
+-- lines and columns are one-based
 local function replace_in_range(pattern, replacement, range, start, finish)
   -- We have two situations:
   -- 1. startline < finishline:
@@ -89,6 +118,7 @@ end
 
 -- highlight all occurences of pattern on #lineno line
 -- return number of matches
+-- lineno is one-based
 local function highlight_in_line(pattern, lineno)
   local matches = 0
   local line = vim.api.nvim_buf_get_lines(0, lineno - 1, lineno, false)[1]
@@ -96,7 +126,7 @@ local function highlight_in_line(pattern, lineno)
   repeat
     start, finish = string.find(line, pattern, start, true)
     if start ~= nil then
-      vim.api.nvim_buf_add_highlight(0, M.namespace, M.regular_pattern_hl, lineno - 1, start - 1, finish)
+      vim.api.nvim_buf_add_highlight(0, M.highlighting_ns, M.regular_pattern_hl, lineno - 1, start - 1, finish)
       matches = matches + 1
       start = start + 1
     end
@@ -106,8 +136,9 @@ end
 
 -- highlight all occurences of pattern in range between firstline and lastline
 -- return number of matches
+-- lines are one-based
 function M.highlight_in_range(pattern, firstline, lastline)
-  vim.api.nvim_buf_clear_namespace(0, M.namespace, firstline, lastline)
+  vim.api.nvim_buf_clear_namespace(0, M.highlighting_ns, firstline, lastline)
   local matches = 0
   for lineno = firstline, lastline do
     matches = matches + highlight_in_line(pattern, lineno)
@@ -115,6 +146,11 @@ function M.highlight_in_range(pattern, firstline, lastline)
   return matches
 end
 
+-- replace all occurences of pattern to replacement
+-- inside given range between firstline and lastline
+-- starting from position {startline, startcolumn}
+-- matches is number of all occurences of pattern in the given range
+-- lines and columns are one-based
 function M.replace_all(pattern, replacement, firstline, lastline, startline, startcolumn, matches)
   local match = 0
   local replaced = 0
@@ -125,6 +161,11 @@ function M.replace_all(pattern, replacement, firstline, lastline, startline, sta
     repeat
       local line = vim.api.nvim_buf_get_lines(0, lineno - 1, lineno, false)[1]
       start, finish = string.find(line, pattern, start, true)
+
+      if M.dehighlighting_enabled then
+        dehighlight(lineno)
+      end
+
       if start ~= nil then
         match = match + 1
 
@@ -134,7 +175,8 @@ function M.replace_all(pattern, replacement, firstline, lastline, startline, sta
           MiniMap.update_map_scrollbar()
           MiniMap.update_map_integrations()
         end
-        vim.api.nvim_buf_add_highlight(0, M.namespace, M.current_pattern_hl, lineno - 1, start - 1, finish)
+
+        vim.api.nvim_buf_add_highlight(0, M.highlighting_ns, M.current_pattern_hl, lineno - 1, start - 1, finish)
         vim.cmd('redraw')
 
         local input
@@ -153,7 +195,7 @@ function M.replace_all(pattern, replacement, firstline, lastline, startline, sta
             MiniMap.update_map_integrations()
           end
         elseif input == 'n' then
-          vim.api.nvim_buf_clear_namespace(0, M.namespace, lineno - 1, lineno)
+          vim.api.nvim_buf_clear_namespace(0, M.highlighting_ns, lineno - 1, lineno)
           highlight_in_line(pattern, lineno)
           start = start + #pattern
         elseif input == 'a' then
@@ -187,6 +229,9 @@ function M.setup(opts)
   M.minimap_enabled = opts.minimap_enabled
   M.regular_pattern_hl = opts.highlighting.regular_search_pattern
   M.current_pattern_hl = opts.highlighting.current_search_pattern
+  M.dehighlighting_enabled = opts.dehighlighting.enabled
+  M.dehighlighting_group = opts.dehighlighting.group
+  M.dehighlighting_range = opts.dehighlighting.range
 end
 
 return M

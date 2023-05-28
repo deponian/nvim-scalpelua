@@ -69,6 +69,14 @@ require("scalpelua").setup({
     regular_search_pattern = "Search",
     current_search_pattern = "WildMenu",
     minimap_integration = "Constant",
+  },
+  -- choose some dim highlighting group for surrounding lines
+  -- to make current pattern more visible
+  -- highlight {range} lines before and {range} lines after current line with {group}
+  dehighlighting = {
+    enabled = false,
+    group = "LineNr",
+    range = 3
   }
 })
 ```
