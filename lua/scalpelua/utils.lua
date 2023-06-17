@@ -117,18 +117,28 @@ local function replace_in_range(pattern, replacement, range, start, finish)
 end
 
 -- highlight all occurences of pattern on #lineno line
+-- if {current} is passed then highlight current pattern individually
+-- {current} is a list like this {start, finish}
 -- return number of matches
 -- lineno is one-based
-local function highlight_in_line(pattern, lineno)
+local function highlight_in_line(pattern, lineno, current)
+  current = current or {-1, -1}
+
+  vim.api.nvim_buf_clear_namespace(0, M.highlighting_ns, lineno - 1, lineno)
+
   local matches = 0
   local line = vim.api.nvim_buf_get_lines(0, lineno - 1, lineno, false)[1]
   local start, finish = 0, 0
   repeat
     start, finish = string.find(line, pattern, start, true)
     if start ~= nil then
-      vim.api.nvim_buf_add_highlight(0, M.highlighting_ns, M.regular_pattern_hl, lineno - 1, start - 1, finish)
+      if start == current[1] and finish == current[2] then
+        vim.api.nvim_buf_add_highlight(0, M.highlighting_ns, M.current_pattern_hl, lineno - 1, start - 1, finish)
+      else
+        vim.api.nvim_buf_add_highlight(0, M.highlighting_ns, M.regular_pattern_hl, lineno - 1, start - 1, finish)
+      end
       matches = matches + 1
-      start = start + 1
+      start = start + #pattern
     end
   until start == nil
   return matches
@@ -176,7 +186,7 @@ function M.replace_all(pattern, replacement, firstline, lastline, startline, sta
           MiniMap.update_map_integrations()
         end
 
-        vim.api.nvim_buf_add_highlight(0, M.highlighting_ns, M.current_pattern_hl, lineno - 1, start - 1, finish)
+        highlight_in_line(pattern, lineno, {start, finish})
         vim.cmd('redraw')
 
         local input
@@ -195,7 +205,6 @@ function M.replace_all(pattern, replacement, firstline, lastline, startline, sta
             MiniMap.update_map_integrations()
           end
         elseif input == 'n' then
-          vim.api.nvim_buf_clear_namespace(0, M.highlighting_ns, lineno - 1, lineno)
           highlight_in_line(pattern, lineno)
           start = start + #pattern
         elseif input == 'a' then
@@ -207,7 +216,6 @@ function M.replace_all(pattern, replacement, firstline, lastline, startline, sta
           return matches
         elseif input == 'l' then
           replace_in_line(pattern, replacement, lineno, start)
-          highlight_in_line(pattern, lineno)
           replaced = replaced + 1
           return replaced
         elseif input == 'q' or input == string.char(27) then
