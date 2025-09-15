@@ -1,34 +1,8 @@
 local M = {}
 
 M.highlighting_ns = vim.api.nvim_create_namespace("scalpelua_hl")
-M.dehighlighting_ns = vim.api.nvim_create_namespace("scalpelua_dehl")
 
--- dehighlight lines before and after number lineno line
--- lineno is one-based
-local function dehighlight(lineno)
-  local clear = vim.api.nvim_buf_clear_namespace
-  local add = vim.api.nvim_buf_add_highlight
-
-  local ns = M.dehighlighting_ns
-  local range = M.dehighlighting_range
-  local group = M.dehighlighting_group
-  local lastline = vim.api.nvim_buf_line_count(0)
-
-  -- convert lineno to zero-based
-  local lineno_zero = lineno - 1
-  local upper_boundary = lineno_zero - range >= 0 and lineno_zero - range or 0
-  local lower_boundary = lineno_zero + range <= lastline and lineno_zero + range or lastline
-
-  clear(0, ns, upper_boundary, lower_boundary)
-  for i = upper_boundary, lower_boundary do
-    -- don't dehighlight current line
-    if i ~= lineno_zero then
-      add(0, ns, group, i, 0, -1)
-    end
-  end
-end
-
--- replace first occurence of pattern after #position column to
+-- replace first occurrence of pattern after #position column to
 -- replacement on number lineno line
 -- lineno is one-based
 -- position is one-based
@@ -40,7 +14,7 @@ local function replace_in_line(pattern, replacement, lineno, position)
   vim.api.nvim_buf_set_lines(0, lineno - 1, lineno, false, {new_line})
 end
 
--- replace all occurences of pattern to replacement
+-- replace all occurrences of pattern to replacement
 -- inside given range between start and finish
 -- range is list {firstline, lastline}
 -- start is list {line, column}
@@ -116,7 +90,7 @@ local function replace_in_range(pattern, replacement, range, start, finish)
   end
 end
 
--- highlight all occurences of pattern on #lineno line
+-- highlight all occurrences of pattern on #lineno line
 -- if {current} is passed then highlight current pattern individually
 -- {current} is a list like this {start, finish}
 -- return number of matches
@@ -133,9 +107,9 @@ local function highlight_in_line(pattern, lineno, current)
     start, finish = string.find(line, pattern, start, true)
     if start ~= nil then
       if start == current[1] and finish == current[2] then
-        vim.api.nvim_buf_add_highlight(0, M.highlighting_ns, M.current_pattern_hl, lineno - 1, start - 1, finish)
+        vim.api.nvim_buf_set_extmark(0, M.highlighting_ns, lineno - 1, start - 1, {end_col = finish, hl_group = M.current_pattern_hl})
       else
-        vim.api.nvim_buf_add_highlight(0, M.highlighting_ns, M.regular_pattern_hl, lineno - 1, start - 1, finish)
+        vim.api.nvim_buf_set_extmark(0, M.highlighting_ns, lineno - 1, start - 1, {end_col = finish, hl_group = M.regular_pattern_hl})
       end
       matches = matches + 1
       start = start + #pattern
@@ -144,7 +118,7 @@ local function highlight_in_line(pattern, lineno, current)
   return matches
 end
 
--- highlight all occurences of pattern in range between firstline and lastline
+-- highlight all occurrences of pattern in range between firstline and lastline
 -- return number of matches
 -- lines are one-based
 function M.highlight_in_range(pattern, firstline, lastline)
@@ -156,10 +130,10 @@ function M.highlight_in_range(pattern, firstline, lastline)
   return matches
 end
 
--- replace all occurences of pattern to replacement
+-- replace all occurrences of pattern to replacement
 -- inside given range between firstline and lastline
 -- starting from position {startline, startcolumn}
--- matches is number of all occurences of pattern in the given range
+-- matches is number of all occurrences of pattern in the given range
 -- lines and columns are one-based
 function M.replace_all(pattern, replacement, firstline, lastline, startline, startcolumn, matches)
   local match = 0
@@ -171,10 +145,6 @@ function M.replace_all(pattern, replacement, firstline, lastline, startline, sta
     repeat
       local line = vim.api.nvim_buf_get_lines(0, lineno - 1, lineno, false)[1]
       start, finish = string.find(line, pattern, start, true)
-
-      if M.dehighlighting_enabled then
-        dehighlight(lineno)
-      end
 
       if start ~= nil then
         match = match + 1
@@ -233,13 +203,14 @@ function M.replace_all(pattern, replacement, firstline, lastline, startline, sta
   return replaced
 end
 
+function M.clear_highlighting()
+  vim.api.nvim_buf_clear_namespace(0, M.highlighting_ns, 0, -1)
+end
+
 function M.setup(opts)
   M.minimap_enabled = opts.minimap_enabled
   M.regular_pattern_hl = opts.highlighting.regular_search_pattern
   M.current_pattern_hl = opts.highlighting.current_search_pattern
-  M.dehighlighting_enabled = opts.dehighlighting.enabled
-  M.dehighlighting_group = opts.dehighlighting.group
-  M.dehighlighting_range = opts.dehighlighting.range
 end
 
 return M

@@ -45,13 +45,15 @@ Map `<Plug>(Scalpelua)` to replace selected sequence or `<Plug>(ScalpeluaMultili
 ```lua
 vim.keymap.set('v', "<leader>r", "<Plug>(Scalpelua)")
 vim.keymap.set('v', "<leader>R", "<Plug>(ScalpeluaMultiline)")
+vim.keymap.set('n', "<leader>r", "<Plug>(Scalpelua)")
 ```
 
 or
 
 ```vim
-vmap <Leader>r <Plug>(Scalpel)
+vmap <Leader>r <Plug>(Scalpelua)
 vmap <Leader>R <Plug>(ScalpelMultiline)
+nmap <Leader>r <Plug>(Scalpelua)
 ```
 
 ### Configuration
@@ -62,26 +64,26 @@ These are default options. You can run empty `require('scalpelua').setup()` if t
 require("scalpelua").setup({
   -- enable/disable integration with mini.map plugin (see below)
   minimap_enabled = false,
+
   -- separator between pattern and replacement in command line
   separator = "»",
+
   -- names of highlighting groups
   highlighting = {
     regular_search_pattern = "Search",
     current_search_pattern = "WildMenu",
     minimap_integration = "Constant",
   },
-  -- choose some dim highlighting group for surrounding lines
-  -- to make current pattern more visible
-  -- highlight {range} lines before and {range} lines after current line with {group}
-  dehighlighting = {
-    enabled = false,
-    group = "LineNr",
-    range = 3
-  },
+
   -- save pattern to "/" register (see :h quote/)
   -- it's useful if you want to run n, N, * and
   -- other search related commands after replacement
   save_search_pattern = true
+
+  -- save pattern and replacement strings to use them
+  -- as defaults in the next :Scalpelua command
+  pattern_register = "p",
+  replacement_register = "r"
 })
 ```
 

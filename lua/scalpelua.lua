@@ -2,8 +2,6 @@ local M = {}
 
 local utils = require("scalpelua.utils")
 local minimap = require("scalpelua.minimap")
-M.highlighting_ns = utils.highlighting_ns
-M.dehighlighting_ns = utils.dehighlighting_ns
 
 local DEFAULT_OPTS = {
   minimap_enabled = false,
@@ -13,12 +11,9 @@ local DEFAULT_OPTS = {
     current_search_pattern = "WildMenu",
     minimap_integration = "Constant",
   },
-  dehighlighting = {
-    enabled = false,
-    group = "LineNr",
-    range = 3
-  },
-  save_search_pattern = true
+  save_search_pattern = true,
+  pattern_register = "p",
+  replacement_register = "r"
 }
 
 function M.setup(config)
@@ -38,6 +33,7 @@ function M.setup(config)
       nargs = 1,
     }
   )
+  vim.keymap.set('n', '<Plug>(Scalpelua)', [[:Scalpelua "<C-R>p" » "<C-R>r"<Left>]])
   vim.keymap.set('v', '<Plug>(Scalpelua)', [[:Scalpelua "<C-R>=luaeval('require("scalpelua").get_oneline_selection()')<CR>" » ""<Left>]])
   vim.keymap.set('v', '<Plug>(ScalpeluaMultiline)', [[:Scalpelua "" » ""<Left><Left><Left><Left><Left><Left>]])
 end
@@ -82,13 +78,17 @@ function M.scalpelua(parameters)
   print(string.format("%s substitution%s out of %s matches", replaced, (replaced == 1) and '' or 's', matches))
 
   -- clear our highlighting
-  vim.api.nvim_buf_clear_namespace(0, M.highlighting_ns, 0, -1)
-  vim.api.nvim_buf_clear_namespace(0, M.dehighlighting_ns, 0, -1)
+  utils.clear_highlighting()
 
-  -- save pattern in the search register
+  -- save the pattern in the search register
   if M.config.save_search_pattern then
     vim.fn.setreg('/', [[\V\C]] .. vim.fn.escape(pattern, [[\]]))
   end
+
+  -- save pattern and replacement strings to use them
+  -- as defaults in future :Scalpelua command
+  vim.fn.setreg(M.config.pattern_register, pattern)
+  vim.fn.setreg(M.config.replacement_register, replacement)
 
   if M.config.minimap_enabled then
     minimap.after_replacement()
